@@ -10,11 +10,10 @@ The documentation fails to mention *what the name of the library to link against
 
 ## Documentation
 Most of the SDL stuff has man pages associated with it (at least in the Arch package).
-This includes both functions and types.
-Use `apropos SDL` to get a list of those pages.
-Some functions do not have their own man pages. 
-Useful comments can usually be found in the header files in `/usr/include/SDL2/` (`grep` helps).
-The [SDL wiki](https://wiki.libsdl.org/) is also helpful.
+The Arch man pages (all SDL man pages?) are severely out of date and incomplete.
+Looking at the header files and their comments is a more reliable reference. (`/usr/include/SDL2/`)
+Keeping a Vim buffer pointed at the relevant headers also makes auto-completion nicer.
+The [SDL wiki](https://wiki.libsdl.org/) is also kind of helpful.
 
 ### Tutorials
 I'm starting by following [the Lazy Foo tutorial](https://lazyfoo.net/tutorials/SDL/index.php#Hello%20SDL).
@@ -52,3 +51,20 @@ SDL_BlitSurface(chris, NULL, windowSurface, &dstrect_dummy);// draw the chris to
 ```
 This would prevent `chrisLocation` from being overwritten, 
 which is what would happen if we simply passed `&chrisLocation` into `SDL_BlitSurface`.
+
+### Preconverting Surfaces
+When blit-ing a surface, the source is converted to the pixelformat of the target (provided that they differ).
+this is a very costly operation, so it makes a lot more sense to do it as infrequently as possible.
+For example, converting everything to the same pixelformat when assets are loaded is a good idea. 
+```c++
+SDL_Surface * windowSurface = NULL;// a surface to be contained by the window
+SDL_Surface * mySurface = NULL;// test image
+/* ... some code ... */
+mySurface = SDL_ConvertSurface(mySurface, windowSurface->format, 0);
+```
+
+### Drawing Stretched Surfaces
+There's a blit function that scales the source surface according to the width and height of the destination rectangle.
+`SDL_BlitScaled(chris, NULL, screenBG, &dstrect_dummy);`
+It's worth noting that large surfaces are a relatively costly thing to blit.
+If you're drawing an image at the same scale many times, you can save some CPU time by pre-scaling it.
