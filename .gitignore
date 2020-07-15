@@ -1,4 +1,13 @@
+# binaries
 main
+
+# symlink to system SDL headers
+SDL2headers
+
+# reference material for SDL_image
+SDL_image*
+SDL2_image*
+
+# stuff related to Lazy Foo
 lazyFooTutorial
-01_hello_SDL
-01_hello_SDL.cpp
+[0-9][0-9]_*
