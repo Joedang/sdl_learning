@@ -135,3 +135,13 @@ for (i=0; i < 100; i++) {// dots along a diagonal
     SDL_RenderDrawPoint(renderer, 3*i, 4*i);
 }
 ```
+
+### Animation
+My implementation is a little cowboy-ish, the way it juggles data on `boiSrc.w`, but it works.
+In a "real" project, I would of course have similar (inheriting?) classes for animated and non-animated sprites,
+and I would explicitly keep track of the frame width, number of frames, and reel length.
+It's a pretty striaght-forward application of the srcrect argument in `SDL_RenderCopy()`.
+
+It's a little hard to tell if I'm getting screen tearing without the `SDL_RENDERER_PRESENTVSYNC` option disabled.
+I tried turning off my compositor and increasing the size of chris, but didn't notice anything.
+TODO: I should try it with an excessively high frame rate and `chrisSpeed`.

@@ -5,8 +5,8 @@
 #include <SDL2/SDL_image.h> // extension to SDL for loading non-BMP images
 // }}}
 // globals {{{
-const int SCREEN_WIDTH = 640;
-const int SCREEN_HEIGHT = 480;
+const int SCREEN_WIDTH = 1080; //640;
+const int SCREEN_HEIGHT = 720; //480;
 // }}}
 // prototypes {{{
 void sdlErr(std::string);// report an error related to SDL
@@ -38,6 +38,12 @@ int main(int argc, char * argv[]) { // {{{
         chrisLocation.y = 0;
         chrisLocation.w = SCREEN_WIDTH;// if we want him to fill the screen
         chrisLocation.h = SCREEN_HEIGHT;
+    float chrisScale = 4;// factor by which to increase the size of the chris "player"
+    char boiFile[] = "img/datBoi_reel.png";
+    SDL_Texture * boiTex = NULL;
+    int boiFrames = 5;
+    SDL_Rect boiSrc = {0,0,0,0};// the current "frame" on the animation "reel"
+    SDL_Rect boiDest = {300,100,100,100};// where the animated sprite will be drawn
     SDL_Rect drawRect = {0,0,0,0};// used for drawing simple geometry
     int chrisSpeed = 10;// how much to move chris per itteration
     int vx = 0;// x velocity
@@ -48,6 +54,7 @@ int main(int argc, char * argv[]) { // {{{
     bool downHeld = false;
     SDL_Event event;// event handler
     SDL_ScaleMode scaleMode = SDL_ScaleModeLinear; // nearest, linear, or best (anisotropic)
+    int delayTime = 50;// ms, delay between frames
     bool quit = false;// whether to quit the program
 
     // dummy variables
@@ -72,7 +79,7 @@ int main(int argc, char * argv[]) { // {{{
                              );
     if (window == NULL)
         sdlErr("Failed to create window.");
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     if (renderer == NULL)
         sdlErr("The renderer could not be created.");
     if (SDL_SetRenderDrawColor(renderer, 0xFF, 0xAA, 0xAA, 0xFF))// color for Rect, Line, and Clear; RGBA
@@ -84,12 +91,23 @@ int main(int argc, char * argv[]) { // {{{
     std::cout << "Loading texture directly from file..." << std::endl;
     chrisTex = IMG_LoadTexture(renderer, chrisFile);
     if (chrisTex == NULL)
-        imgErr("Failed to load texture from file.");
+        imgErr("Failed to load chris texture from file.");
     // Get the width and height from chrisTex and put them into the chrisLocation width and height.
     // This ensures that "player" is the size of the image.
     SDL_QueryTexture(chrisTex, &format, &access, &chrisLocation.w, &chrisLocation.h);
+    chrisLocation.w *= chrisScale;// make chris bigger
+    chrisLocation.h *= chrisScale;
+    boiTex = IMG_LoadTexture(renderer, boiFile);
+    if (boiTex == NULL)
+        imgErr("Failed to load boi texture from file.");
+    SDL_QueryTexture(boiTex, &format, &access, &boiSrc.w, &boiSrc.h);
+    boiSrc.w = boiSrc.w/boiFrames;
+    std::cout << "boiSrc.w: " << boiSrc.w << std::endl;
+    boiDest.w = boiSrc.w;
+    boiDest.h = boiSrc.h;
     std::cout << "Setting texture scale mode: " << scaleMode << "..." << std::endl;
     SDL_SetTextureScaleMode(chrisTex, scaleMode);
+    SDL_SetTextureScaleMode(boiTex, scaleMode);
     // }}}
     // main loop {{{
     std::cout << "entering main loop..." << std::endl;
@@ -192,6 +210,10 @@ int main(int argc, char * argv[]) { // {{{
         SDL_SetTextureAlphaMod(chrisTex, bgAlpha);
         SDL_RenderCopy(renderer, chrisTex, NULL, &screenBG_rect);// render background texture
         SDL_SetTextureAlphaMod(chrisTex, 0xFF);
+        // draw dat boi
+        dstrect_dummy = boiDest;
+        SDL_RenderCopy(renderer, boiTex, &boiSrc, &dstrect_dummy);// render foreground texture (scales instead of crops)
+        boiSrc.x = (boiSrc.x + boiSrc.w) % (boiSrc.w * boiFrames);
         // draw chris
         dstrect_dummy = chrisLocation;
         SDL_RenderCopy(renderer, chrisTex, NULL, &dstrect_dummy);// render foreground texture (scales instead of crops)
@@ -199,7 +221,7 @@ int main(int argc, char * argv[]) { // {{{
         // }}}
 
         // This *really* helps ensure sane CPU usage.
-        SDL_Delay(50);// wait some ms
+        SDL_Delay(delayTime);// wait some ms
     }
     // }}}
 
