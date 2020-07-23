@@ -16,7 +16,12 @@ Keeping a Vim buffer pointed at the relevant headers also makes auto-completion 
 The [SDL wiki](https://wiki.libsdl.org/) is also kind of helpful.
 
 ### Tutorials
-I'm starting by following [the Lazy Foo tutorial](https://lazyfoo.net/tutorials/SDL/index.php#Hello%20SDL).
+I'm starting by loosely following [the Lazy Foo tutorial](https://lazyfoo.net/tutorials/SDL/index.php#Hello%20SDL).
+I think the coding style they display and the whole "I'm also going to cover C++ basics." thing 
+makes it a little difficult to get useful info out of those tutorials.
+So, I'm basically collating the stuff they show into a very linear "one of everything" chrestomathy.
+I don't care yet about writing the skeleton of a game engine.
+I just want a project that serves as a minimum working example of the essentials. 
 
 ## Events
 Use an object of type `SDL_Event` to buffer events.
@@ -94,3 +99,14 @@ Window
 ```
 
 SDL_RenderCopy() actually uses dstrect to scale the texture rather than crop it, unlike BlitSurface().
+
+### Transparency
+When directly loading a texture from a file, as opposed to going through a surface first,
+you get transparency from the image for free (assuming the image has transparency).
+This can be done with `IMG_LoadTexture()`.
+You'll want to be able to get the resolution of the image to put into the `dstrect`, so it's scaled proporionally.
+This can be done like `SDL_QueryTexture(texturePtr, &format, &access, &rect.w, &rect.h)`.
+The function directly copies the width and height values into the rectangle, since it's pass-by-reference.
+
+## Smooth Player Movement
+The naive ""
