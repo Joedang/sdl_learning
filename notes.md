@@ -1,3 +1,4 @@
+# SDL Learning
 ## Including SDL
 Remember that SDL is included with `#include <SDL2/SDL.h>`, 
 so the Lazy Foo tutorials will need to be tweaked in that way.
@@ -26,19 +27,28 @@ I just want a project that serves as a minimum working example of the essentials
 ## Events
 Use an object of type `SDL_Event` to buffer events.
 Use `SDL_PollEvent(SDL_Event * event)` to grab the events from the user.
+The `event` keeps a queue of events received.
+Holding keys sends events the way you'd expect from a text editor.
+(There's a "down" event on the initial keypress, a pause, and then a bunch of rapid "down" events.)
 
-TODO: I would like to know why keypresses seem to send events as if the program were a text editor, 
-      rather than just recognizing down/up events.
-      Pressing and holding an arrow key, the image moves one step, waits, and then moves smoothly.
+### Smooth Player Movement
+The naive "move when there's a press event" that's shown in the Lazy Foo tutorials gives movement 
+that is similar to what you'd experience when holding down a key in a text editor.
+To get smoother movement, you have to keep track of whether a key is currently held by looking at keyup and keydown events together.
 
 ### Exiting a Program
-The SDL_QUIT event
-SDL_QUIT is neccessary and sufficient for:
+The `SDL_QUIT` event
+`SDL_QUIT` is neccessary and sufficient for:
 - exiting a window with "Xing-out" or Alt+F4 via the WM
 - SIGINT from the terminal
 - maybe more...
+This allows the program to close itself gracefully (deallocating resources), 
+rather than being killed every time. 
 
-## Drawing to a Location
+## Drawing with Surfaces
+Note that drawing with surfaces is kind of obsolete (CPU), compared to using textures (GPU).
+The main reason to use surfaces is if you want to do weird logic that can't be achieved with texture operations.
+
 `SDL_BlitSurface` is used to draw one surface onto another.
 (*Blit* is an old-school term for drawing an image.)
 Annoyingly, the destination rectangle is only used to convey location, 
@@ -108,5 +118,20 @@ You'll want to be able to get the resolution of the image to put into the `dstre
 This can be done like `SDL_QueryTexture(texturePtr, &format, &access, &rect.w, &rect.h)`.
 The function directly copies the width and height values into the rectangle, since it's pass-by-reference.
 
-## Smooth Player Movement
-The naive ""
+### Simple Geometry
+There are also functions to draw simple geometry with the GPU.
+They use whatever color was last set on the renderer with `SDL_SetRenderDrawColor()`.
+```c++
+SDL_SetRenderDrawColor(renderer, 0x33, 0x11, 0x11, 0xFF);// RGBA, dark red
+SDL_RenderClear(renderer);// make the renderer all one color
+SDL_SetRenderDrawColor(renderer, 0x55, 0x55, 0x55, 0xFF);// gray
+drawRect = SDL_Rect {50, 50, 50, 100};// left, top, width, height; rectangle from (50,50) to (100, 150)
+SDL_RenderFillRect(renderer, &drawRect);// filled-in rectangle
+drawRect = SDL_Rect {20, 20, 100, 100};
+SDL_SetRenderDrawColor(renderer, 0x00, 0xCC, 0x00, 0xFF);// green
+SDL_RenderDrawRect(renderer, &drawRect);// single-pixel rectangle
+SDL_RenderDrawLine(renderer, 20,20,100,150);// x1, y1, x2, y2; line from (20,20) to (100,150)
+for (i=0; i < 100; i++) {// dots along a diagonal
+    SDL_RenderDrawPoint(renderer, 3*i, 4*i);
+}
+```
