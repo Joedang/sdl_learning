@@ -11,10 +11,12 @@ void imgErr(std::string);// report an error related to SDL_image
 void printPixelFmt(SDL_PixelFormat);// verbosely print all the data in a pixel format
 
 int main(int argc, char * argv[]) {
-
+    std::cout << "declaring variables" << std::endl;
     SDL_Window * window = NULL;// a window to render things to
+    SDL_Renderer * renderer = NULL;// window renderer
     SDL_Surface * windowSurface = NULL;// a surface to be contained by the window
     SDL_Surface * chris = NULL;// test image
+    SDL_Texture * chrisTex = NULL;
     SDL_Surface * surfaceHelper = NULL;
     SDL_Surface * screenBG = NULL;// screen background
     SDL_Rect screenBG_rect;// a rectangle that fills the screen
@@ -22,58 +24,89 @@ int main(int argc, char * argv[]) {
         screenBG_rect.y = 0;
         screenBG_rect.w = SCREEN_WIDTH;
         screenBG_rect.h = SCREEN_HEIGHT;
+    //SDL_Texture * bgTex = NULL;
     char chrisFile[] = "img/chris.png";// test file to use
     //char chrisFile[] = "img/chris24.bmp";// test file to use
     SDL_Rect chrisLocation;// where to draw the test image
-        chrisLocation.x = 50;
-        chrisLocation.y = 50;
+        chrisLocation.x = 0;
+        chrisLocation.y = 0;
         chrisLocation.w = SCREEN_WIDTH;// if we want him to fill the screen
         chrisLocation.h = SCREEN_HEIGHT;
     SDL_Rect dstrect_dummy = chrisLocation;// for non-destructive location drawing
     int chrisSpeed = 10;// how much to move chris per itteration
     SDL_Event event;// event handler
+    SDL_ScaleMode scaleMode = SDL_ScaleModeLinear; // nearest, linear, or best (anisotropic)
     bool quit = false;// whether to quit the program
 
-    // initialize SDL
+    // initialization (similar to lazyfoo's init())
+    std::cout << "initializing..." << std::endl;
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
         sdlErr("Failed to initialize SDL.");
-
-    // create a window
+    if (!SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1")) // nearest-pixel (0) may be preferrable for pixel art
+        sdlErr("Linear texture filtering is not enabled.");
     window = SDL_CreateWindow( "SDL Learning", 
                                 SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 
                                 SCREEN_WIDTH, SCREEN_HEIGHT, 
                                 SDL_WINDOW_SHOWN
                              );
     if (window == NULL)
-        sdlErr("Window could not be created.");
-
+        sdlErr("Failed to create window.");
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    if (renderer == NULL)
+        sdlErr("The renderer could not be created.");
+    if (SDL_SetRenderDrawColor(renderer, 0xFF, 0xAA, 0xAA, 0xFF))// color for Rect, Line, and Clear; RGBA
+        sdlErr("Failed to set renderer draw color.");
     if (IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG) < 0)// load the libraries for loading images
         sdlErr("Failed to initialize image support.");
-
     windowSurface = SDL_GetWindowSurface(window);// get the reference to the window's surface (framebuffer)
 
+    // similar to lazyfoo's loadTexture()
+    std::cout << "loading image(s)..." << std::endl;
     chris = IMG_Load(chrisFile);
     //chris = SDL_LoadBMP(chrisFile);
     if (chris == NULL)
         imgErr("Failed to load chris.");
+    chrisLocation.w = chris->w;
+    chrisLocation.h = chris->h;
 
     // Make the formats match. This prevents the conversion from ocurring on every blit.
-    printf("window pixel format: %s\n", SDL_GetPixelFormatName(windowSurface->format->format));
-    printf("chris pixel format (pre-conversion): %s\n", SDL_GetPixelFormatName(chris->format->format));
+    std::cout << "converting pixel formats..." << std::endl;
+    std::cout << "window pixel format:" << std::endl;
+    std::cout << "\t" << SDL_GetPixelFormatName(windowSurface->format->format) << std::endl;//figure out why this segfaults!... It helps to not uncomment pointer assignments, lol.
+    //printf("window pixel format: %s\n", SDL_GetPixelFormatName(windowSurface->format->format));
+    std::cout << "chris pixel format (pre-conversion:)" << std::endl;
+    std::cout << "\t" << SDL_GetPixelFormatName(chris->format->format) << std::endl;
+    //printf("chris pixel format (pre-conversion): %s\n", SDL_GetPixelFormatName(chris->format->format));
+    std::cout << "actually doing it..." << std::endl;
     surfaceHelper = SDL_ConvertSurface(chris, windowSurface->format, 0);
+    std::cout << "freeing chris surface..." << std::endl;
     SDL_FreeSurface(chris);// free the old surface
     chris = surfaceHelper;// swap the pointers around
     surfaceHelper = NULL; 
     printf("chris pixel format (post-conversion): %s\n", SDL_GetPixelFormatName(chris->format->format));
+    std::cout << "creating texture from surface..." << std::endl;
+    chrisTex = SDL_CreateTextureFromSurface(renderer, chris);
+    if (chrisTex == NULL)
+        sdlErr("Failed to create texture from surface.");
+    std::cout << "Setting texture scale mode: " << scaleMode << "..." << std::endl;
+    SDL_SetTextureScaleMode(chrisTex, scaleMode);
+    //std::cout << "Saving a copy of the chris surface..." << std::endl;
+    //if (SDL_SaveBMP(chris, "chris_surface.bmp") < 0)
+    //    sdlErr("Failed to save a copy of the chris surface.");
 
     // prepare a surface to serve as a background
     // Use a copy of the window surface to define the extents and format of the screen background.
-    screenBG = SDL_ConvertSurface(windowSurface, windowSurface->format, 0);
-    dstrect_dummy = screenBG_rect;
-    SDL_BlitScaled(chris, NULL, screenBG, &dstrect_dummy);
-    printf("screenBG pixel format: %s\n", SDL_GetPixelFormatName(screenBG->format->format));
+    //std::cout << "preparing background..." << std::endl;
+    //screenBG = SDL_ConvertSurface(windowSurface, windowSurface->format, 0);
+    //dstrect_dummy = screenBG_rect;
+    //SDL_BlitScaled(chris, NULL, screenBG, &dstrect_dummy);
+    //printf("screenBG pixel format: %s\n", SDL_GetPixelFormatName(screenBG->format->format));
+    //bgTex = SDL_CreateTextureFromSurface(renderer, screenBG);
+    //if (bgTex == NULL)
+    //    sdlErr("Failed to load background texture.");
 
     // main loop
+    std::cout << "entering main loop..." << std::endl;
     while (!quit) {
         while (SDL_PollEvent(&event) != 0) {
             switch (event.type){
@@ -104,27 +137,43 @@ int main(int argc, char * argv[]) {
         // TODO: I would like to know why keypresses seem to send events as if the program were a text editor, 
         //       rather than just recognizing down/up events.
         //       Pressing and holding an arrow key, the image moves one step, waits, and then moves smoothly.
+
         // draw stuff
         //SDL_FillRect(windowSurface, NULL, SDL_MapRGB(windowSurface->format, 0xAA, 0xAA, 0xAA));// fill that surface with a color
-        dstrect_dummy = screenBG_rect;
-        SDL_BlitSurface(screenBG, NULL, windowSurface, &dstrect_dummy);// draw the background
+        SDL_RenderClear(renderer);// clear the screen
+        //dstrect_dummy = screenBG_rect;
+        //SDL_BlitSurface(screenBG, NULL, windowSurface, &dstrect_dummy);// draw the background
+        //SDL_RenderCopy(renderer, bgTex, NULL, NULL);// render background texture
+        SDL_RenderCopy(renderer, chrisTex, NULL, &screenBG_rect);// render background texture
         dstrect_dummy = chrisLocation;
-        SDL_BlitSurface(chris, NULL, windowSurface, &dstrect_dummy);// draw the chris to the screen
+        //SDL_BlitSurface(chris, NULL, windowSurface, &dstrect_dummy);// draw the chris to the screen
         //SDL_BlitScaled(chris, NULL, windowSurface, &dstrect_dummy);// about twice as CPU-hungry with a 48x62 PNG
-        SDL_UpdateWindowSurface(window);// update the surface
+        //TODO: figure out why it's displaying big chris
+        //TODO: It's still using surfaces to render the background. Make it use textures for everything.
+        SDL_RenderCopy(renderer, chrisTex, NULL, &dstrect_dummy);// render foreground texture (scales instead of crops)
+        //SDL_UpdateWindowSurface(window);// update the surface
+        SDL_RenderPresent(renderer);// draw the rendering to the screen
 
         // This *really* helps ensure sane CPU usage.
         SDL_Delay(100);// wait some ms
     }
 
-	// free resources
-	SDL_DestroyWindow(window);// This also destroys the framebuffer referred to by windowSurface.
-    SDL_FreeSurface(chris);
 
-	//Quit SDL subsystems
-    std::cout << "Goodbye." << std::endl;
+	// Free resources and Quit SDL subsystems (like lazyfoo's close())
+    std::cout << "cleaning up..." << std::endl;
+    SDL_DestroyTexture(chrisTex);
+    chrisTex = NULL; // TODO: I'm not sure if it's necessary to set stuff to NULL like this.
+    //SDL_DestroyTexture(bgTex);
+    //bgTex = NULL;
+    SDL_DestroyRenderer(renderer);
+    renderer = NULL;
+	SDL_DestroyWindow(window);// This also destroys the framebuffer referred to by windowSurface.
+    window = NULL;
+    SDL_FreeSurface(chris);
+    chris = NULL;
     IMG_Quit();
 	SDL_Quit();
+    std::cout << "Goodbye." << std::endl;
     return 0;
 }
 

@@ -68,3 +68,29 @@ There's a blit function that scales the source surface according to the width an
 `SDL_BlitScaled(chris, NULL, screenBG, &dstrect_dummy);`
 It's worth noting that large surfaces are a relatively costly thing to blit.
 If you're drawing an image at the same scale many times, you can save some CPU time by pre-scaling it.
+
+## GPU Rendering
+### Textures
+The pipeline to get an image shown is this:
+
+```
+char * # filename of an image
+|
+| IMG_Load()
+v
+Surface # pixel data of the image in RAM
+|
+| CreateTextureFromSurface() # needs to know the target renderer
+v
+Texture # pixel data of the image in VRAM
+|
+| RenderCopy() # blit/draw the texture to the renderer
+v
+Renderer
+|
+| RenderPresent() # blit/draw the renderer to the window
+v
+Window
+```
+
+SDL_RenderCopy() actually uses dstrect to scale the texture rather than crop it, unlike BlitSurface().
