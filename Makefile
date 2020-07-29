@@ -3,7 +3,7 @@ CC=g++
 # compiler flags
 CC_FLAGS=
 # linker flags
-CC_LINK=-lSDL2 -lSDL2_image -lSDL2_ttf #-lSDL2_mixer
+CC_LINK=-lSDL2 -lSDL2_image -lSDL2_ttf -lSDL2_mixer
 # files to compile as part of the project
 OBJ_SRC=01_hello_SDL.cpp
 # name of the executable

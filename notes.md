@@ -13,7 +13,8 @@ The documentation fails to mention *what the name of the library to link against
 Most of the SDL stuff has man pages associated with it (at least in the Arch package).
 The Arch man pages (all SDL man pages?) are severely out of date and incomplete.
 Looking at the header files and their comments is a more reliable reference. (`/usr/include/SDL2/`)
-Keeping a Vim buffer pointed at the relevant headers also makes auto-completion nicer.
+~~Keeping a Vim buffer pointed at the relevant headers also makes auto-completion nicer.~~
+Actually, it's enough to just have a symlink to the header file directory in Vim's working directory.
 The [SDL wiki](https://wiki.libsdl.org/) is also kind of helpful.
 
 ### Tutorials
@@ -145,3 +146,19 @@ It's a pretty striaght-forward application of the srcrect argument in `SDL_Rende
 It's a little hard to tell if I'm getting screen tearing without the `SDL_RENDERER_PRESENTVSYNC` option disabled.
 I tried turning off my compositor and increasing the size of chris, but didn't notice anything.
 TODO: I should try it with an excessively high frame rate and `chrisSpeed`.
+
+## Key States
+Key states are only updated when their respective events enter the queue.
+This is done through `SDL_PumpEvents()`, which is called implicitly by `SDL_PollEvent()`, and `SDL_WaitEvent()`. 
+`SDL_GetKeyboardState()` only needs to be called once to get the array pointer.
+From then on, the contents of the array are updated by `SDL_PumpEvents()`.
+
+TODO: I should really find out if anonymously dereferencing a pointer causes a memory leak.
+for example: `ver = *IMG_Linked_Version();`
+
+## Audio
+Don't get lazy and write something like `2^11` for your chunk size. 
+`^` is the bitwise-exclusive-or operator, *not* the exponential operator!
+So, `2^11` is actually `9` and not `2048`.
+Having such a small chunk size will result in the audio device failing to open for music, 
+but not for the regular audio channels.
